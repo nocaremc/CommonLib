@@ -62,18 +62,18 @@ local bSkipTablesInMainBody = false		--don't object to global tables declared in
 -- strict.lua for Civ5
 --------------------------------------------------------------
 --these functions safely do nothing if debug library not enabled
-function Globals() print("Called Globals but the debug library is not enabled; set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua") end	
-function PrintStrictLuaErrors() print("Called PrintStrictLuaErrors but the debug library is not enabled; set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua") end
-function PrintGlobals() print("Called PrintGlobals but the debug library is not enabled; set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua") end
-function MakeTableStrict() print("Called MakeTableStrict but the debug library is not enabled; set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua") end
+function Globals() NKPrint("Called Globals but the debug library is not enabled; set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua") end	
+function PrintStrictLuaErrors() NKPrint("Called PrintStrictLuaErrors but the debug library is not enabled; set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua") end
+function PrintGlobals() NKPrint("Called PrintGlobals but the debug library is not enabled; set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua") end
+function MakeTableStrict() NKPrint("Called MakeTableStrict but the debug library is not enabled; set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua") end
 
 --bail out of this file if debug library not enabled (can't do anything)
 if not debug then
-    print("The debug library is not enabled! Set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua.")
+    NKPrint("The debug library is not enabled! Set EnableLuaDebugLibrary = 1 in config.ini to use strict.lua.")
     return
 end
 
-print("Setting strict.lua!")
+NKPrint("Setting strict.lua!")
 
 --localized stuff
 local getinfo = debug.getinfo
@@ -86,12 +86,12 @@ local _G = debug.getfenv(Globals)
 
 function MakeTableStrict(table)
     local bEnv = table == _G
-    print("(strict.lua) MakeTableStrict ", table, (bEnv and " --this is the environment" or ""))
+    NKPrint("(strict.lua) MakeTableStrict ", table, (bEnv and " --this is the environment" or ""))
 
     --bail out if table has metatable already
     local mt = getmetatable(table)
     if mt then
-        print("ERROR! MakeTableStrict called for a table that already has a metatable; modify strict.lua if you want this to work")
+        NKPrint("ERROR! MakeTableStrict called for a table that already has a metatable; modify strict.lua if you want this to work")
         return
     end
 
@@ -121,9 +121,9 @@ function MakeTableStrict(table)
                     str = str .. " at: \n" .. string.format("  %s: %d", (info.source or "nil"), (info.currentline or "-1"))
                     if not strictLuaErrors[str] then
                         strictLuaErrors[str] = numErrors	--use string as key for easy unique handling, numErrors can be used to sort by first occurance
-                        print("ERROR #" .. numErrors .. " " .. str)
+                        NKPrint("ERROR #" .. numErrors .. "\n" .. str .. "\n")
                     elseif not bPrintUniqueErrorsOnly then
-                        print("ERROR #" .. numErrors .. " " .. str)
+                        NKPrint("ERROR #" .. numErrors .. "\n" .. str .. "\n")
                     end
                 end
             end
@@ -149,9 +149,9 @@ function MakeTableStrict(table)
                     str = str .. " at: \n" .. string.format("  %s: %d", (info.source or "nil"), (info.currentline or "-1"))
                     if not strictLuaErrors[str] then
                         strictLuaErrors[str] = numErrors	--use string as key for easy unique handling, numErrors can be used to sort by first occurance
-                        print("ERROR #" .. numErrors .. " " .. str)
+                        NKPrint("ERROR #" .. numErrors .. "\n" .. str .. "\n")
                     elseif not bPrintUniqueErrorsOnly then
-                        print("ERROR #" .. numErrors .. " " .. str)
+                        NKPrint("ERROR #" .. numErrors .. "\n" .. str .. "\n")
                     end
                 end
             end
@@ -170,18 +170,18 @@ MakeTableStrict(_G)
 function Globals(...)	--allows declaration of globals after this file included
     local mt = getmetatable(_G)
     for _, name in pairs({...}) do
-        print("(strict.lua) Global name will be ignored: ", name)
+        NKPrint("(strict.lua) Global name will be ignored: ", name)
         mt.__declared[name] = true
     end
 end
 
 function PrintStrictLuaErrors()
     if bAssert then
-        print("(strict.lua) We don't save errors if bAssert = true; check Lua.log for Runtime Errors")
+        NKPrint("(strict.lua) We don't save errors if bAssert = true; check Lua.log for Runtime Errors")
     elseif numErrors == 0 then
-        print("(strict.lua) There have been no errors")
+        NKPrint("(strict.lua) There have been no errors")
     else
-        print("(strict.lua) Printing non-redundant errors:")
+        NKPrint("(strict.lua) Printing non-redundant errors:")
         local n = 0
         local errors = {}
         for k, v in pairs(strictLuaErrors) do
@@ -191,9 +191,9 @@ function PrintStrictLuaErrors()
         table.sort(errors, function(a, b) return a[1] < b[1] end)
         for i = 1, n do
             local error = errors[i]
-            print("ERROR #" .. error[1] .. " " .. error[2])
+            NKPrint("ERROR #" .. error[1] .. " " .. error[2])
         end
-        print("Total number of strict.lua errors including redundant: " .. numErrors)
+        NKPrint("Total number of strict.lua errors including redundant: " .. numErrors)
     end
 end
 
@@ -207,7 +207,7 @@ function PrintGlobals()	--try it!
     table.sort(names)
     for i = 1, n do
         local k = names[i]
-        print (k, _G[k])
+        NKPrint (k, _G[k])
     end
 end
 
