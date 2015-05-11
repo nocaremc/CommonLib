@@ -28,8 +28,10 @@ function CommonLib:Initialize()
 	CL.println("CommonLib:Initialize")
 
 	Eternus.GameState:RegisterSlashCommand("CommonLib", self, "Info")
+	Eternus.GameState:RegisterSlashCommand("JSONTest", self, "JSONTest")
 	Eternus.GameState:RegisterSlashCommand("Args", self, "Args")
-	Eternus.GameState:RegisterSlashCommand("Heal", self, "Heal")
+    Eternus.GameState:RegisterSlashCommand("LuaStrict", self, "LuaStrict")
+	--Eternus.GameState:RegisterSlashCommand("Heal", self, "Heal")
 	
 	Eternus.GameState:RegisterSlashCommand("ApplyBuff", self, "ApplyBuff")
 	
@@ -88,6 +90,15 @@ function CommonLib:ApplyBuff(args)
 end
 
 -------------------------------------------------------------------------------
+-- Enables Strict Lua warnings
+function CommonLib:LuaStrict( args )
+    EnableLuaDebugLibrary = 0
+    require("Libs/strict")
+    -- todo: Create a hook so mods can ignore globals when actually needed
+    -- Globals( "Ball" ) 
+end
+
+-------------------------------------------------------------------------------
 -- Called from C++ when the current game enters 
 function CommonLib:Enter()	
 	CL.println("CommonLib:Enter")
@@ -98,9 +109,10 @@ function CommonLib:Enter()
 	--Eternus.GameState.m_survivalUI.m_backpackView2:Hide()
 	--Eternus.InputSystem:NKHideMouse()
 	--self.m_showInventory2 = false
-	
-	
-	local player = Eternus.GameState:GetLocalPlayer():NKGetInstance()
+end
+
+function CommonLib:LocalPlayerReady(player)	
+	CL.println("CommonLib:LocalPlayerReady")
 	
 	player.m_targetAcquiredSignal:Add(function(hitObj)
 		if hitObj and hitObj:NKGetInstance() then
@@ -152,7 +164,7 @@ function CommonLib:Process(dt)
 		end
 		self.cl_debuggingBox:SetText(out)
 	else
-		self.cl_debuggingBox:SetText("No object selected, lol")
+		self.cl_debuggingBox:SetText("No object selected")
 		self.hitObj = nil
 	end
 	
@@ -172,15 +184,23 @@ function CommonLib:Process(dt)
 	]]
 end
 
-function CommonLib:Render()
-end
-
-function CommonLib:Render()
-end
-
-
 function CommonLib:Info(args)
 	CL.println("CommonLib:Info")
+end
+
+function CommonLib:JSONTest(args)
+	CL.println("CommonLib:JSONTest")
+	local tbl = {
+	  animals = { "dog", "cat", "aardvark" },
+	  instruments = { "violin", "trombone", "theremin" },
+	  bugs = CL.json.null,
+	  trees = nil
+	}
+	local str = CL.jsonEncode(tbl);
+	local tbl2 = CL.jsonDecode(str);
+	NKWarn("tbl: " .. EternusEngine.Debugging.Inspect(tbl) .. "\n")
+	NKWarn("str: " .. str .. "\n")
+	NKWarn("tbl2: " .. EternusEngine.Debugging.Inspect(tbl2) .. "\n")
 end
 
 function CommonLib:Heal(args)
@@ -204,6 +224,17 @@ end
 	CL.println("CommonLib:TX")
 	Eternus.GameState:ToggleCustomInventory( Eternus.GameState.m_survivalUI.m_backpackView2 )
 end]]
+
+function CommonLib:SavePlayerData(player, outData)
+	outData.cl = {}
+end
+
+function CommonLib:RestorePlayerData(player, inData, version)
+	if inData == nil then
+		return
+	end
+	NKWarn("CommonLib:RestorePlayerData: " .. EternusEngine.Debugging.Inspect(inData.cl))
+end
 
 CL.println(" [EntityFramework] CommonLib")
 EntityFramework:RegisterModScript(CommonLib)
